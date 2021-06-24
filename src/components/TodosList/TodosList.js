@@ -1,160 +1,82 @@
 import React, { useEffect, useState } from "react";
-import { Api } from "./common/Api";
-import { makeStyles } from "@material-ui/core/styles";
+import { Api } from "../common/Api";
 import axios from "axios";
-import Card from "./Card";
+import Card from "../Card/Cards";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
-import  {todosList } from '../actions/TodoAction'
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
 import { Button } from "@material-ui/core";
 import ClearIcon from "@material-ui/icons/Clear";
 import Pagination from "@material-ui/lab/Pagination";
+import { colors } from "../common/Colors";
+import { useStyles } from "./Styles";
+import { getAllTodos } from "../../actions/TodoAction";
 
-function TodoLists({ onToggleDark }) {
+function TodoLists(props) {
   const [taskList, setTaskList] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [token, setToken] = useState("");
   const [completed, setCompleted] = useState(null);
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState("title.asc");
-  const [limit, setLimit] = useState(4);
   const [pageCount, setPageCount] = useState(1);
   const [dark, setDark] = useState(false);
-
-  //   let taskList = []
-  const useStyles = makeStyles((theme) => ({
-    taskcontainer: {
-      height: "600px",
-      width: "100%",
-      display: "flex",
-      flexWrap: "wrap",
-      backgroundColor: "#F6F7F8",
-      padding: "40px 100px",
-    },
-    root: {
-      width: "200px",
-      marginTop: "2em",
-      marginBottom: "2em",
-      position: "relative",
-      left: "4em",
-    },
-    deleteButton: {
-      position: "relative",
-      top: "2.5em",
-      left: "2em",
-    },
-    button: {
-      backgroundColor: "red",
-      color: "white",
-      fontSize: "1em",
-      fontWeight: "bold",
-      position: "relative",
-      left: "5em",
-      bottom: "0.5em",
-      "&:hover": {
-        background: "red",
-      },
-    },
-    searchButton: {
-      backgroundColor: "yellowgreen",
-      color: "white",
-      margin: "0 1em",
-    },
-    createTodoButton: {
-      position: "relative",
-      top: "2em",
-      height: "40px",
-      left: "5em",
-      margin: "0 2em",
-    },
-    themeButton: {
-      position: "relative",
-      left: "4em",
-      bottom: "3em",
-    },
-    theme: {
-      backgroundColor: dark ? "black" : "white",
-    },
-  }));
-
-  const colors = [
-    {
-      primaryColor: "#5D93E1",
-      secondaryColor: "#ECF3FC",
-    },
-  ];
-
   const classes = useStyles();
+  const limit = 4;
 
   useEffect(() => {
-    const token = localStorage.getItem("value");
-    if (token) {
-      setToken(token);
-      getTodoLists();
-    }
+    getTodoLists();
     // eslint-disable-next-line
   }, [token, page, sortBy]);
 
   useEffect(() => {
-    console.log(localStorage.getItem("dark"))
-    const theme = localStorage.getItem("dark");
-    console.log(theme)
-    if (theme == null) {
-      setDark(true);
-    } else {
-      setDark(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("dark", dark);
+    localStorage.setItem("dark", "dark");
   }, [dark]);
 
   const getTodoLists = async (searchTerm) => {
-    const response = await axios.get(Api.todoList, {
-      params: {
-        search: searchTerm,
+    const token = localStorage.getItem("value");
+    setToken(token);
+    try {
+      const response = await getAllTodos(
+        searchTerm,
         limit,
         page,
-        sort_by: sortBy,
-      },
-      headers: { "Content-Type": "application/json", "auth-token": token },
-    });
-    if (response && response.data.status === "success") {
-      const payload = response.data.payload;
-      setPageCount(payload.total_pages);
-      setPage(payload.page);
-      setTaskList(payload.todos);
-      // localStorage.setItem("taskList", obj)
+        sortBy,
+        token
+      );
+      if (response && response.data.status === "success") {
+        const payload = response.data.payload;
+        localStorage.setItem("todos", JSON.stringify(payload.todos));
+        setPageCount(payload.total_pages);
+        setPage(payload.page);
+        setTaskList(payload.todos);
+      }
+    } catch (err) {
+      alert("Something Went Wrong");
     }
-    
   };
   const handleSearch = () => {
-    console.log("Test1", searchTerm);
     if (searchTerm) {
       getTodoLists(searchTerm);
     }
   };
 
-  const deleteTodos = async () => {
+  const deleteCompletedTodos = async () => {
     try {
       const response = await axios.delete(Api.deleteCompleteTodos, {
         headers: { "Content-Type": "application/json", "auth-token": token },
       });
-
       if (response && response.data.status === "success") {
         getTodoLists();
       }
     } catch (err) {
       alert("Something went wrong");
-      console.log(err);
     }
   };
 
   const handleCreateTask = () => {
-    window.location.href = "/create-todo";
+    props.history.push("/create-todo");
   };
 
   const handleClear = () => {
@@ -162,16 +84,32 @@ function TodoLists({ onToggleDark }) {
     getTodoLists();
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("value");
+    localStorage.removeItem("todos");
+    localStorage.removeItem("dark");
+    props.history.push("/login");
+  };
+
+  const handleStatsScreen = () => {
+    props.history.push("/stat-screen");
+  };
+
   return (
-    <div className={classes.theme}>
-      <h1>List Of Todos</h1>
+    <div style={{ backgroundColor: dark ? "black" : "white" }}>
+      <h1 style={{ backgroundColor: colors[5 % 5].primaryColor }}>
+        Todos List
+      </h1>
       <input
         type="text"
         placeholder="searchtodo"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
       />
-      <ClearIcon onClick={() => handleClear()} />
+      <ClearIcon
+        style={{ position: "relative", right: "1em" }}
+        onClick={() => handleClear()}
+      />
       <Button
         className={classes.searchButton}
         onClick={handleSearch}
@@ -179,14 +117,13 @@ function TodoLists({ onToggleDark }) {
       >
         SearchTodo
       </Button>
-      {/* //   <Button onClick={handleSearch} disabled={!searchTerm}>SearchTodo</Button> */}
       <div className="filter">
         <FormControl
           variant="outlined"
           className={classes.root}
           style={{
-            "background-color": colors[5 % 5].secondaryColor,
-            "border-radius": "10px",
+            backgroundColor: colors[5 % 5].secondaryColor,
+            borderRadius: "10px",
           }}
         >
           <InputLabel id="demo-simple-select-outlined-label">
@@ -213,13 +150,13 @@ function TodoLists({ onToggleDark }) {
           variant="outlined"
           className={classes.root}
           style={{
-            "background-color": colors[5 % 5].secondaryColor,
+            backgroundColor: colors[5 % 5].secondaryColor,
             "border-radius": "10px",
           }}
         >
-          <InputLabel id="demo-simple-select-outlined-label">SortBy</InputLabel>
+          <InputLabel id="demo-simple-select-outlined-label">Sort</InputLabel>
           <Select
-            value={""}
+            value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
             label="SortBy"
           >
@@ -230,7 +167,7 @@ function TodoLists({ onToggleDark }) {
           </Select>
         </FormControl>
         <span className={classes.deleteButton}>
-          <Button className={classes.button} onClick={deleteTodos}>
+          <Button className={classes.button} onClick={deleteCompletedTodos}>
             DeleteTodos
           </Button>
         </span>
@@ -242,8 +179,29 @@ function TodoLists({ onToggleDark }) {
         >
           Toggle Theme Type
         </Button>
+        <Button
+          className={classes.themeButton}
+          variant="contained"
+          color="primary"
+          onClick={handleLogout}
+        >
+          Logout
+        </Button>
+        <div className={classes.statButton}>
+          <Button
+            variant="contained"
+            color="default"
+            className={classes.themeButton}
+            onClick={() => handleStatsScreen()}
+          >
+            StatScreen
+          </Button>
+        </div>
       </div>
-      <div className={`${classes.taskcontainer} ${classes.theme}`}>
+      <div
+        className={classes.taskcontainer}
+        style={{ backgroundColor: dark ? "black" : "white" }}
+      >
         {taskList &&
           taskList
             .filter((todo) => completed === null || completed === todo.done)
@@ -256,13 +214,14 @@ function TodoLists({ onToggleDark }) {
               />
             ))}
         <br />
-        <Pagination
-          count={pageCount}
-          page={page}
-          onChange={(e, val) => setPage(val)}
-          color="primary"
-        />
       </div>
+      <Pagination
+        className={classes.page}
+        count={pageCount}
+        page={page}
+        onChange={(e, val) => setPage(val)}
+        color="primary"
+      />
     </div>
   );
 }

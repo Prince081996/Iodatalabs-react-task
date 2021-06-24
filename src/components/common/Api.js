@@ -1,6 +1,7 @@
 const baseUrl = "http://todo.dev.api.iodatalabs.com/api"
 
 export const Api = {
+    getAllUsers:`${baseUrl}/v1/users/`,
     createUser:`${baseUrl}/v1/users`,
     loginUser:`${baseUrl}/v1/users/login`,
     createTodo:`${baseUrl}/v1/todos/`,

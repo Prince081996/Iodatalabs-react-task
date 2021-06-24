@@ -1,13 +1,4 @@
-import {
-  CREATE_TODO,
-  CREATE_TODO_SUCCESS,
-  CREATE_TODO_FAILURE,
-  UPDATE_TODO,
-  DELETE_TODO,
-  DELETE_ALL_COMPLETED_TODOS,
-  GET_TODOS_LIST,
-  GET_TODO_BY_ID,
-} from "../types";
+import { GET_TODOS_LIST, GET_TODO_BY_ID } from "../types";
 
 const initialState = {
   todos: [],
@@ -16,21 +7,27 @@ const initialState = {
   todosPosting: true,
 };
 
-const todoReducer =  (state = initialState, action) => {
-  console.log("REDUCER_: ", [action.type, action.payload]);
+const todoReducer = (state = initialState, action) => {
+  const payload = action.payload && action.payload.payload;
   switch (action.type) {
     case GET_TODOS_LIST:
       return {
         ...state,
+        todos: payload.todos,
         todosLoading: true,
-        todosList:action.payload
-      }; 
+      };
+    case GET_TODO_BY_ID:
+      return {
+        ...state,
+        todos: action.payload,
+        todosLoading: true,
+      };
     default:
-        return {
-          ...state,
-          todosPostError: action.payload,
-        };
+      return {
+        ...state,
+        todosPostError: action.payload,
+      };
   }
 };
 
-export default todoReducer
+export default todoReducer;
