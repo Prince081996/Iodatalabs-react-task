@@ -44,21 +44,18 @@ const Card = ({
     const formData = {
       done: !taskObj.done,
     };
+    try{
     const token = localStorage.getItem("value");
     const response = await axios.put(Api.updateTodo + `${id}`, formData, {
       headers: { "Content-Type": "application/json", "auth-token": token },
     });
     if (response && response.data && response.data.status === "success") {
-      const completed = response.data.payload.done;
       getTodoLists();
-      if (completed) {
-        alert("Todo is Successfully completed");
-        return;
-      }
-      if (!completed) {
-        alert("You Marked Todo as Uncompleted");
-      }
+      return
     }
+  }catch(err){
+    alert("Something Went wrong")
+  }
   };
 
   return (
@@ -98,7 +95,7 @@ const Card = ({
         <span
           onClick={() => handleClick(taskObj.id)}
           className={classes.title}
-          style={{ backgroundColor: dark ? "white" : "" }}
+          style={{ backgroundColor: dark ? "white" : "" , cursor:"pointer"}}
         >
           {taskObj.title}
         </span>
